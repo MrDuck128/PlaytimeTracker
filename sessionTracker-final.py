@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import datetime
 from time import sleep
 import json
@@ -38,6 +39,7 @@ def saveSession():
         "endTime": endTime,
         "difference": str(difference)
     }
+    print(f'Saving to: "{path}" as "{newSessionIndex+".json"}"')
     with open(os.path.join(path, newSessionIndex+".json"), 'w') as file:
         file.write(json.dumps(data, indent=4))
 
@@ -58,8 +60,8 @@ config.read('config.ini')
 
 # C:\Programski-kod\Playtime Tracker\Games
 gamesPath = config['DEFAULT']['GamesPath']
-if gamesPath == 'Default':
-    gamesPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Games')
+if gamesPath == 'Default' or not os.path.isdir(gamesPath):
+    gamesPath = os.path.join(os.path.dirname(sys.argv[0]), 'Games') # TODO
 openingScanInterval = int(config['DEFAULT']['OpeningScanInterval'])
 closingScanInterval = int(config['DEFAULT']['ClosingScanInterval'])
 gameExeNames = config['DEFAULT']['GameExeNames']

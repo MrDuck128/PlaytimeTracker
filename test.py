@@ -38,8 +38,21 @@
 
 # print(gameName)
 
+# import os 
+
+# gp =  os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Games')
+
+# print(gp)
+
 import os 
+import sys
 
 gp =  os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Games')
+gp2 =  os.path.join(os.path.dirname(sys.argv[0]), 'Games')
+gp3 =  os.path.join(os.path.dirname(sys.executable), 'Games')
 
 print(gp)
+print(gp2)
+print(gp3)
+
+input('cekam')
