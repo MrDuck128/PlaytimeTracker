@@ -44,15 +44,27 @@
 
 # print(gp)
 
-import os 
+from PyQt6 import QtGui, QtCore, QtWidgets
+from PyQt6.QtWidgets import *
+
 import sys
 
-gp =  os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Games')
-gp2 =  os.path.join(os.path.dirname(sys.argv[0]), 'Games')
-gp3 =  os.path.join(os.path.dirname(sys.executable), 'Games')
 
-print(gp)
-print(gp2)
-print(gp3)
 
-input('cekam')
+if __name__ == '__main__':
+
+    app = QApplication(sys.argv)
+
+
+    listWidget = QListWidget()
+    listWidget.show()
+
+    ls = ['test', 'test2', 'test3']
+
+    listWidget.addItem('test')
+    listWidget.addItem('test2')
+    listWidget.addItem('test3')
+
+    listWidget.addItems(ls)
+
+    app.exec()
