@@ -75,13 +75,25 @@ class MainWindow(QMainWindow):
         listWidget.show()
 
         gamesAndPlaytimes = loadPlaytimes()
-        
-        delegate = CustomDelegate(listWidget)
-        listWidget.setItemDelegate(delegate)
-            
+
+        def addGameItem(game, playtime, ):
+            item = QWidget()
+            item_layout = QHBoxLayout(item)
+            item_layout.setContentsMargins(0, 0, 0, 0)
+
+            label1 = QLabel(game)
+            label1.setStyleSheet("font-weight: bold;")
+            item_layout.addWidget(label1)
+
+            label2 = QLabel(playtime)
+            label2.setStyleSheet("color: red;")
+            item_layout.addWidget(label2)
+
+            listWidget.addItem("")
+            listWidget.setItemWidget(listWidget.item(listWidget.count() - 1), item)
 
         for (game, playtime) in gamesAndPlaytimes:
-            listWidget.addItem(game)
+            addGameItem(game, playtime)
 
         listWidget.setStyleSheet("""
             QListWidget {
@@ -93,31 +105,6 @@ class MainWindow(QMainWindow):
             }
         """)
 
-class CustomDelegate(QStyledItemDelegate):
-    def sizeHint(self, option, index):
-        size = super().sizeHint(option, index)
-        size.setHeight(60)  # Set the desired row height
-        return size
-    
-    # def paint(self, game, playtime):
-
-    #     item = QWidget()
-    #     itemLayout = QHBoxLayout(item)
-    #     itemLayout.setContentsMargins(0, 0, 0, 0)
-
-    #     label1 = QLabel(game)
-    #     label1.setStyleSheet("font-weight: bold;")
-    #     itemLayout.addWidget(label1)
-
-    #     label2 = QLabel(playtime)
-    #     label2.setStyleSheet("color: red;")
-    #     itemLayout.addWidget(label2)
-
-    #     # listWidget.addItem("")
-    #     # listWidget.setItemWidget(listWidget.item(listWidget.count() - 1), item)
-
-    #     # Delegate to the base implementation for painting
-    #     super().paint(game, playtime)
 
 app = QApplication(sys.argv)
 

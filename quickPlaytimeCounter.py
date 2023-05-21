@@ -37,9 +37,9 @@ def reloadSessionPlaytimes():
         with open(totalPath, 'r') as f:
             oldPlaytime = f.read()
         if oldPlaytime != str(totalPlaytime):
-            if input('Outputs not the same, do you want to override old time? (y/n)') == 'y':
+            # if input('Outputs not the same, do you want to override old time? (y/n)') == 'y':
                 with open(totalPath, 'w') as f:
                     f.write(str(totalPlaytime))
 
 if __name__ == '__main__':
-    loadPlaytimes()
+    print(loadPlaytimes())
