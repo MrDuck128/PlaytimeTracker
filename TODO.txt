@@ -1,1 +1,2 @@
-- gui
+- make gui pretty
+- add game images?

@@ -1,8 +1,12 @@
 ## Usage
 
-- Launch **Session Tracker.exe**, then launch your game of choice, tracker should say that it started tracking and list the game. After you close the game, tracker will stop by itself depending on the *ClosingScanInterval*. It will display the save location directory and the session playtime
+- Launch **Session Tracker.exe**, then launch your game of choice, the tracker should say that it started tracking and list the game. After you close the game, tracker will stop by itself depending on the *ClosingScanInterval*. It will display the save location directory and the session playtime
 
 - If the tracker doesn't recognise your game, add the game name into the **gamesExeNames.json** like so: "gameExe.exe": "GameName (can be whatever)"
+
+- Run **gameNameOrder.py** to sort game names in *gamesExeNames.json* alphabetically
+
+- You can edit the config for more options (check below). If there is no config file *Session Tracker.exe* will create one with default values on launch
 
 
 ## Config

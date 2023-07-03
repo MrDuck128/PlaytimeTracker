@@ -5,6 +5,22 @@ import sys
 from quickPlaytimeCounter import loadPlaytimes, reloadSessionPlaytimes
 from random import choice
 
+class StyledListItemWidget(QWidget):
+    def __init__(self, text1, text2, parent=None):
+        super().__init__(parent)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        label1 = QLabel(text1)
+        label1.setStyleSheet("font-weight: bold;")
+        layout.addWidget(label1)
+
+        label2 = QLabel(text2)
+        label2.setStyleSheet("color: red;")
+        layout.addWidget(label2)
+
+
 class MainWindow(QMainWindow):
     
     def __init__(self):
@@ -81,7 +97,10 @@ class MainWindow(QMainWindow):
             
 
         for (game, playtime) in gamesAndPlaytimes:
-            listWidget.addItem(game)
+            item = QListWidgetItem()
+            itemWidget = StyledListItemWidget(game, playtime)
+            listWidget.addItem(item)
+            listWidget.setItemWidget(item, itemWidget)
 
         listWidget.setStyleSheet("""
             QListWidget {
