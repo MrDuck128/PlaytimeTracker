@@ -1,2 +1,4 @@
-- make gui pretty
-- add game images?
+- update listWidget instead of restarting app (widget.update()?)
+- decide how to add images (map with pictures)
+- package helper functions into the main exe
+- restructure git (source directory + other usable files)
