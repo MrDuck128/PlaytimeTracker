@@ -30,16 +30,26 @@ def reloadSessionPlaytimes():
                 (h, m, s) = (int(x) for x in info['difference'].split(':'))
                 totalPlaytime += timedelta(hours=h, minutes=m, seconds=s)
 
+        # FORMAT TOTAL PLAYTIME
+        totalPlaytime = totalPlaytime.total_seconds()
+        hours = int(totalPlaytime / 3600)
+        minutes = int(totalPlaytime % 3600 / 60)
+        seconds = int((totalPlaytime % 3600) % 60)
+        totalPlaytime = f'{hours:02d}:{minutes:02d}:{seconds:02d}'
+
+        # IF "0.txt" FILE DOENS'T EXIST
         if not start:
             with open(totalPath, 'w') as file:
-                file.write(str(totalPlaytime))
+                file.write(totalPlaytime)
+            return
 
         with open(totalPath, 'r') as f:
             oldPlaytime = f.read()
-        if oldPlaytime != str(totalPlaytime):
+        if oldPlaytime != totalPlaytime:
             # if input('Outputs not the same, do you want to override old time? (y/n)') == 'y':
                 with open(totalPath, 'w') as f:
-                    f.write(str(totalPlaytime))
+                    f.write(totalPlaytime)
 
 if __name__ == '__main__':
     print(loadPlaytimes())
+    # reloadSessionPlaytimes()

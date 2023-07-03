@@ -30,7 +30,13 @@ def saveSession():
     eT = datetime.now().replace(microsecond=0)
     endDate = eT.strftime("%d-%m-%Y")
     endTime = eT.strftime("%H:%M:%S")
-    difference = eT - sT
+    differenceSeconds = (eT - sT).total_seconds()
+
+    # FORMAT DIFFERENCE
+    hours = int(differenceSeconds / 3600)
+    minutes = int(differenceSeconds % 3600 / 60)
+    seconds = int((differenceSeconds % 3600) % 60)
+    difference = f'{hours:02d}:{minutes:02d}:{seconds:02d}'
 
     data = {
         "startDate": startDate,
@@ -46,14 +52,16 @@ def saveSession():
     return difference
 
 
+# MAKE DEFAULT CONFIG IF ONE DOESN'T EXIST
 if not os.path.isfile('config.ini'):
     with open('config.ini', 'w') as configFile:
         configFile.write('[DEFAULT]')
         configFile.write('\nGamesPath = Default')
-        configFile.write('\nOpeningScanInterval = 5')
+        configFile.write('\nOpeningScanInterval = 2')
         configFile.write('\nClosingScanInterval = 20')
         configFile.write('\nGameExeNames = gamesExeNames.json')
 
+# READ CONFIG FILE
 config = configparser.ConfigParser()
 config.optionxform = str
 config.read('config.ini')
@@ -65,6 +73,7 @@ if gamesPath == 'Default' or not os.path.isdir(gamesPath):
 openingScanInterval = int(config['DEFAULT']['OpeningScanInterval'])
 closingScanInterval = int(config['DEFAULT']['ClosingScanInterval'])
 gameExeNames = config['DEFAULT']['GameExeNames']
+
 
 # SCAN FOR GAME LOOP, break if game found
 with open(gameExeNames, 'r') as file:

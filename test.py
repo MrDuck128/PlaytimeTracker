@@ -1,70 +1,31 @@
-# import psutil
-
-# for proc in psutil.process_iter():
-#     if proc.name() != 'CalculatorApp.exe':
-#         continue
-#     print('da')
-#     break
-    
-
-# import configparser
-
-# config = configparser.ConfigParser()
-# config.optionxform = str
-# config.read('config.ini')
-
-# for key in config['DEFAULT']:
-#     print(key, config['DEFAULT'][key])
-
-# import json
-
-# def scanForGame(gamesProcessList):
-#     for i in ['sekiro.exe']:
-#         if i in gamesProcessList:
-#             return i
+from datetime import datetime
+from time import sleep
 
 
-# with open('gamesExeNames.json', 'r') as file:
-#     games = json.load(file)
-
-# gamesProcessList = list(games.keys())
-
-# while True:
-#     game = scanForGame(gamesProcessList)
-
-#     if game:
-#         gameName = games[game]
-#         break
-
-# print(gameName)
-
-# import os 
-
-# gp =  os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Games')
-
-# print(gp)
-
-from PyQt6 import QtGui, QtCore, QtWidgets
-from PyQt6.QtWidgets import *
-
-import sys
+def formatDifference(difference):
+    hours = int(difference / 3600)
+    minutes = int(difference % 3600 / 60)
+    seconds = int((difference % 3600) % 60)
+    return f'{hours:02d}:{minutes:02d}:{seconds:02d}'
 
 
 
-if __name__ == '__main__':
+# sT = datetime.strptime('04/04/21 09:31:22', '%d/%m/%y %H:%M:%S')
+sT = datetime.now().replace(microsecond=0)
+startDate = sT.strftime("%d-%m-%Y")
+startTime = sT.strftime("%H:%M:%S")
 
-    app = QApplication(sys.argv)
+sleep(1)
 
+eT = datetime.now().replace(microsecond=0)
+endDate = eT.strftime("%d-%m-%Y")
+endTime = eT.strftime("%H:%M:%S")
+difference = (eT - sT).total_seconds()
 
-    listWidget = QListWidget()
-    listWidget.show()
+print(sT)
+print(startDate)
+print(startTime)
 
-    ls = ['test', 'test2', 'test3']
+print(difference)
 
-    listWidget.addItem('test')
-    listWidget.addItem('test2')
-    listWidget.addItem('test3')
-
-    listWidget.addItems(ls)
-
-    app.exec()
+print(formatDifference(difference))
