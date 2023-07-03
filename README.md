@@ -1,3 +1,10 @@
+## Usage
+
+- Launch **Session Tracker.exe**, then launch your game of choice, tracker should say that it started tracking and list the game. After you close the game, tracker will stop by itself depending on the *ClosingScanInterval*. It will display the save location directory and the session playtime
+
+- If the tracker doesn't recognise your game, add the game name into the **gamesExeNames.json** like so: "gameExe.exe": "GameName (can be whatever)"
+
+
 ## Config
 
 **GamesPath** - specify a path where the game session logs will be saved. Default saves to the same location as .exe file in *Games* directory (enter without quotation marks)
