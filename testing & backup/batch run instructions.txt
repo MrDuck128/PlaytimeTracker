@@ -1,0 +1,7 @@
+batch file with 
+python.exe path -> python.py path -> "game name"
+
+Example:
+@echo off
+"C:\Programi\Python 3.11.3\python.exe" "C:\Programski-kod\Playtime Tracker\sessionTracker.py" "Sekiro Shadows"
+pause

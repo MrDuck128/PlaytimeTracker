@@ -1,4 +1,5 @@
-- update listWidget instead of restarting app (widget.update()?)
-- decide how to add images (map with pictures)
-- package helper functions into the main exe
-- restructure git (source directory + other usable files)
+Playtime Tracker
+- add session preview for each entry?
+
+Session Tracker
+- add current session time?
