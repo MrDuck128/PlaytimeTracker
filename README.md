@@ -9,6 +9,8 @@
 
 - To add pictures to game listings, put a .png file with the game name (can be custom but must match the game name in *gamesExeNames.json*) in the folder named GameIcons (GameIcons must be in the same directory as the executable)
 
+![](source/showcase.png)
+
 
 ## Session Tracker
 
