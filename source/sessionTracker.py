@@ -21,7 +21,7 @@ def isGameStillOpen(gameProcessName):
 
 def saveSession():
     # ADD NEW FILE AFTER LAST INDEX OR START AT 1 IF NONE EXIST
-    if not os.listdir(path):
+    if not os.listdir(path) or len(os.listdir(path)) == 1 and os.path.isfile(os.path.join(path, '0.txt')):
         newSessionIndex = str(1)
     else:
         lastSessionIndex = int(natsorted(os.listdir(path))[-1].replace('.json', ''))
