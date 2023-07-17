@@ -10,10 +10,10 @@ def loadPlaytimes():
 
         if os.path.isfile(path):
             with open(path, 'r') as f:
-                playtime = f.read()
-            playtimes.append((dir, playtime))
+                playtime, completed = f.read().splitlines()
+            playtimes.append((dir, playtime, int(completed)))
         else:
-            playtimes.append((dir, 0))
+            playtimes.append((dir, 0, False))
     return playtimes
 
 
@@ -41,14 +41,16 @@ def reloadSessionPlaytimes():
         if not start:
             with open(totalPath, 'w') as file:
                 file.write(totalPlaytime)
+                file.write("\n0")
             return
 
         with open(totalPath, 'r') as f:
-            oldPlaytime = f.read()
+            oldPlaytime, completed = f.read().splitlines()
         if oldPlaytime != totalPlaytime:
             # if input('Outputs not the same, do you want to override old time? (y/n)') == 'y':
                 with open(totalPath, 'w') as f:
                     f.write(totalPlaytime)
+                    f.write('\n' + completed)
 
 if __name__ == '__main__':
     print(loadPlaytimes())

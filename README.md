@@ -1,3 +1,9 @@
+## About
+
+- This is a app made for tracking sessions when playing games that don't have their own trackers (or even if they do)
+- Main app displays the game along with the current playtime and *completed* checkmark
+- App is made in python using PyQt library
+
 ## Usage
 
 - Download *Playtime Tracker.exe*, *Session Tracker.exe*, *gamesExeNames.json* and GameIcons folder

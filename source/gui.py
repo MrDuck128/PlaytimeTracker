@@ -11,7 +11,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(900, 400, 800, 600)
         self.setMinimumSize(500, 350)
         self.setWindowTitle("Playtime Tracker")
-        self.setWindowIcon(QIcon('logo.ico'))
+        self.setWindowIcon(QIcon('source/palm.ico'))
 
         mainWidget = QWidget(self)
         self.setCentralWidget(mainWidget)
@@ -152,9 +152,9 @@ class MainWindow(QMainWindow):
         
         self.listWidget.clear()
         self.search.clear()
-        for (game, playtime) in loadPlaytimes():
+        for (game, playtime, completed) in loadPlaytimes():
             item = QListWidgetItem()
-            itemWidget = StyledListItemWidget(game, playtime)
+            itemWidget = StyledListItemWidget(game, playtime, completed)
             self.listWidget.addItem(item)
             self.listWidget.setItemWidget(item, itemWidget)
     
@@ -166,7 +166,7 @@ class CustomDelegate(QStyledItemDelegate):
         return size
     
 class StyledListItemWidget(QWidget):
-    def __init__(self, game, playtime, parent=None):
+    def __init__(self, game, playtime, completed, parent=None):
         super().__init__(parent)
 
         row = QHBoxLayout(self)
@@ -189,16 +189,39 @@ class StyledListItemWidget(QWidget):
                                 font-weight: bold;
                                 font-size: 14pt;
                              """)
-        row.addWidget(label1, 2)
+        row.addWidget(label1, 3)
 
-        label2 = QLabel(playtime)
-        label2.setStyleSheet("""
-                                padding: 7px;
-                                color: red;
-                                font-weight: bold;
-                                font-size: 14pt;
-                            """)
-        row.addWidget(label2, 1)
+        self.label2 = QLabel(playtime)
+        self.changeLabelColor(completed)
+        row.addWidget(self.label2, 1)
+
+        checkbox = QCheckBox(self)
+        checkbox.setChecked(completed)
+        checkbox.stateChanged.connect(lambda completed: self.changeCompleted(game, playtime, checkbox.isChecked()))
+        row.addWidget(checkbox, 1)
+
+    def changeCompleted(self, game, playtime, completed):
+        with open(os.path.join('Games', game, '0.txt'), 'w') as f:
+            f.write(playtime)
+            f.write('\n' + str(int(completed)))
+        self.changeLabelColor(completed)
+        
+    def changeLabelColor(self, completed):
+        if completed:
+            self.label2.setStyleSheet("""
+                                    padding: 7px;
+                                    color: green;
+                                    font-weight: bold;
+                                    font-size: 14pt;
+                                """)
+        else:
+            self.label2.setStyleSheet("""
+                                    padding: 7px;
+                                    color: red;
+                                    font-weight: bold;
+                                    font-size: 14pt;
+                                """)
+
 
 app = QApplication(sys.argv)
 
