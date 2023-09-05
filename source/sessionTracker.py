@@ -19,6 +19,14 @@ def isGameStillOpen(gameProcessName):
             return True
     return False
 
+def formatSeconds(seconds):
+    hours = int(seconds / 3600)
+    minutes = int(seconds % 3600 / 60)
+    seconds = int((seconds % 3600) % 60)
+    
+    return hours, minutes, seconds
+
+
 def saveSession():
     # ADD NEW FILE AFTER LAST INDEX OR START AT 1 IF NONE EXIST
     if not os.listdir(path) or len(os.listdir(path)) == 1 and os.path.isfile(os.path.join(path, '0.txt')):
@@ -33,9 +41,7 @@ def saveSession():
     differenceSeconds = (eT - sT).total_seconds()
 
     # FORMAT DIFFERENCE
-    hours = int(differenceSeconds / 3600)
-    minutes = int(differenceSeconds % 3600 / 60)
-    seconds = int((differenceSeconds % 3600) % 60)
+    hours, minutes, seconds = formatSeconds(differenceSeconds)
     difference = f'{hours:02d}:{minutes:02d}:{seconds:02d}'
 
     data = {
@@ -59,6 +65,7 @@ if not os.path.isfile('config.ini'):
         configFile.write('\nGamesPath = Default')
         configFile.write('\nOpeningScanInterval = 2')
         configFile.write('\nClosingScanInterval = 20')
+        configFile.write('\nCurrentPlaytimeUpdateInterval = 600')
         configFile.write('\nGameExeNames = gamesExeNames.json')
 
 # READ CONFIG FILE
@@ -72,6 +79,7 @@ if gamesPath == 'Default' or not os.path.isdir(gamesPath):
     gamesPath = os.path.join(os.path.dirname(sys.argv[0]), 'Games') # TODO
 openingScanInterval = int(config['DEFAULT']['OpeningScanInterval'])
 closingScanInterval = int(config['DEFAULT']['ClosingScanInterval'])
+currentPlaytimeUpdateInterval = int(config['DEFAULT']['CurrentPlaytimeUpdateInterval'])
 gameExeNames = config['DEFAULT']['GameExeNames']
 
 
@@ -88,7 +96,6 @@ while True:
     if gameProcessName:
         gameFullName = gamesDict[gameProcessName]
         print(f'GAME FOUND! -> {gameFullName} ({gameProcessName})')
-        print('Tracking...')
         break
 
     sleep(openingScanInterval)
@@ -105,6 +112,7 @@ if not os.path.isdir(path):
     os.makedirs(path)
 
 # CHECK IF GAME IS OPEN, IF NOT SAVE SESSION
+currentPlaytime = 0
 while True:
     gameStillOpen = isGameStillOpen(gameProcessName)
 
@@ -113,6 +121,11 @@ while True:
         playtime = saveSession()
         break
 
+    if currentPlaytime % currentPlaytimeUpdateInterval == 0:
+        hours, minutes, seconds = formatSeconds(currentPlaytime)
+        print(f'Tracking...       {hours:02d}:{minutes:02d}:{seconds:02d}', end='\r', flush=True)
+
+    currentPlaytime += closingScanInterval
     sleep(closingScanInterval)
 
 print(f'Played for {playtime}')

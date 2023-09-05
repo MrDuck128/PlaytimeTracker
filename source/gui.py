@@ -143,9 +143,10 @@ class MainWindow(QMainWindow):
     def closeApp(self):
         QCoreApplication.instance().quit()
 
-    def restart(self):
-        QCoreApplication.quit()
-        status = QProcess.startDetached(sys.executable, sys.argv)
+    # depricated
+    # def restart(self):
+    #     QCoreApplication.quit()
+    #     status = QProcess.startDetached(sys.executable, sys.argv)
 
     def reloadData(self):
         reloadSessionPlaytimes()
@@ -173,7 +174,7 @@ class StyledListItemWidget(QWidget):
         row.setContentsMargins(0, 0, 0, 0)
 
         if os.path.isfile('GameIcons/' + game + '.png'):
-            picName = game
+            picName = game + '.png'
         else:
             picName = 'default.png'
 
@@ -197,7 +198,7 @@ class StyledListItemWidget(QWidget):
 
         checkbox = QCheckBox(self)
         checkbox.setChecked(completed)
-        checkbox.stateChanged.connect(lambda completed: self.changeCompleted(game, playtime, checkbox.isChecked()))
+        checkbox.stateChanged.connect(lambda completed: self.changeCompleted(game, playtime, checkbox.isChecked())) # TODO lambda?
         row.addWidget(checkbox, 1)
 
     def changeCompleted(self, game, playtime, completed):

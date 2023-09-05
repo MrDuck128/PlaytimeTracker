@@ -1,5 +1,5 @@
 Playtime Tracker
 - add session preview for each entry?
+- remove unnecessary qt imports
 
 Session Tracker
-- add current session time?
