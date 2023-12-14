@@ -1,8 +1,14 @@
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
+import typing
+from PyQt6 import QtCore
+from PyQt6.QtGui import QIcon, QFont, QPixmap
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QListWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QListWidgetItem, QPushButton, QStyledItemDelegate, QCheckBox
+from PyQt6.QtCore import Qt, QCoreApplication
 import sys, os
-from quickPlaytimeCounter import loadPlaytimes, reloadSessionPlaytimes
+from quickPlaytimeCounter import loadPlaytimes, reloadSessionPlaytimes, loadSessions
+import ctypes
+
+myappid = 'playtimeTracker'
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 class MainWindow(QMainWindow):
     
@@ -11,7 +17,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(900, 400, 800, 600)
         self.setMinimumSize(500, 350)
         self.setWindowTitle("Playtime Tracker")
-        self.setWindowIcon(QIcon('source/palm.ico'))
+        self.setWindowIcon(QIcon('palm.ico'))
 
         mainWidget = QWidget(self)
         self.setCentralWidget(mainWidget)
@@ -82,7 +88,6 @@ class MainWindow(QMainWindow):
                 listWidgetItem.setHidden(True)
 
     def main(self, layout):
-
         self.listWidget = QListWidget()
         self.listWidget.setSpacing(0)
         # listWidget.setGeometry(0, 80, 1000, 450)
@@ -90,14 +95,9 @@ class MainWindow(QMainWindow):
         
         delegate = CustomDelegate(self.listWidget)
         self.listWidget.setItemDelegate(delegate)
+        self.listWidget.itemDoubleClicked.connect(self.launchSessionPreview)
 
         self.reloadData()
-        
-        # for (game, playtime) in loadPlaytimes():    # KAKA
-        #     item = QListWidgetItem()
-        #     itemWidget = StyledListItemWidget(game, playtime)
-        #     self.listWidget.addItem(item)
-        #     self.listWidget.setItemWidget(item, itemWidget)
 
         self.listWidget.setStyleSheet("""
             QListWidget {
@@ -111,6 +111,10 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.listWidget)
 
+    def launchSessionPreview(self, item):
+        item = self.listWidget.itemWidget(item).findChildren(QLabel)[1].text()
+        sessionPreview = SessionPreview(item, self)
+        sessionPreview.show()
 
     def footer(self, layout):
         footerLayout = QGridLayout()
@@ -149,8 +153,10 @@ class MainWindow(QMainWindow):
     #     status = QProcess.startDetached(sys.executable, sys.argv)
 
     def reloadData(self):
-        reloadSessionPlaytimes()
-        
+        # reload and check if no games
+        if not reloadSessionPlaytimes():
+            return
+
         self.listWidget.clear()
         self.search.clear()
         for (game, playtime, completed) in loadPlaytimes():
@@ -158,12 +164,17 @@ class MainWindow(QMainWindow):
             itemWidget = StyledListItemWidget(game, playtime, completed)
             self.listWidget.addItem(item)
             self.listWidget.setItemWidget(item, itemWidget)
-    
 
 class CustomDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
         size.setHeight(128)  # Set the desired row height
+        return size
+    
+class CustomDelegate2(QStyledItemDelegate):
+    def sizeHint(self, option, index):
+        size = super().sizeHint(option, index)
+        size.setHeight(64)  # Set the desired row height
         return size
     
 class StyledListItemWidget(QWidget):
@@ -222,6 +233,148 @@ class StyledListItemWidget(QWidget):
                                     font-weight: bold;
                                     font-size: 14pt;
                                 """)
+
+class StyledListItemWidget2(QWidget):
+    def __init__(self, i, startDate, startTime, endDate, endTime, playtime, parent=None):
+        super().__init__(parent)
+
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 0, 0, 0)
+
+        self.label1 = QLabel(i)
+        self.label1.setStyleSheet("""
+                                padding: 7px;
+                                font-weight: bold;
+                                font-size: 14pt;
+                             """)
+        row.addWidget(self.label1, 1)
+
+        self.labelStart = QLabel("Start:")
+        row.addWidget(self.labelStart, 1)
+
+        self.label2 = QLabel(startDate)
+        self.label2.setStyleSheet("""
+                                font-size: 12pt;
+                                font-weight: bold;
+                             """)
+        row.addWidget(self.label2, 2)
+
+        self.label3 = QLabel(startTime)
+        self.label3.setStyleSheet("""
+                                font-size: 12pt;
+                                font-weight: bold;
+                             """)
+        row.addWidget(self.label3, 2)
+
+        self.labelEnd = QLabel("End:")
+        row.addWidget(self.labelEnd, 1)
+
+        self.label4 = QLabel(endDate)
+        self.label4.setStyleSheet("""
+                                font-size: 12pt;
+                                font-weight: bold;
+                             """)
+        row.addWidget(self.label4, 2)
+
+        self.label5 = QLabel(endTime)
+        self.label5.setStyleSheet("""
+                                font-size: 12pt;
+                                font-weight: bold;
+                             """)
+        row.addWidget(self.label5, 2)
+
+        self.label6 = QLabel(playtime)
+        self.label6.setStyleSheet("""
+                                padding: 7px;
+                                font-weight: bold;
+                                font-size: 14pt;
+                                color: red;
+                             """)
+        row.addWidget(self.label6, 2)
+
+
+class SessionPreview(QMainWindow):
+    def __init__(self, gameName, parent):
+        super().__init__(parent)
+        self.resize(800, 600)
+        self.setWindowTitle(f"Session Preview - {gameName}")
+        self.setWindowIcon(QIcon('palm.ico'))
+
+        mainWidget = QWidget(self)
+        self.setCentralWidget(mainWidget)
+
+        layout = QVBoxLayout(mainWidget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.header(layout, gameName)
+        self.main(layout, gameName)
+        # self.footer(layout)
+
+    def header(self, layout, gameName):
+        header = QWidget(self)
+        header.setStyleSheet('background-color: rgb(117,193,240);')
+
+        headerLayout = QVBoxLayout(header)
+
+        # title in header
+        titleFont = QFont()
+        titleFont.setFamily("Unispace")
+        titleFont.setPointSize(36)
+
+        title = QLabel(gameName)
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setFont(titleFont)
+        title.setFixedHeight(80)
+        title.setStyleSheet("""
+                                color: rgb(255, 0, 0);
+                            """)
+
+        headerLayout.addWidget(title)
+
+        layout.addWidget(header)
+
+    def main(self, layout, gameName):
+        self.listWidget = QListWidget()
+        self.listWidget.setSpacing(0)
+        # listWidget.setGeometry(0, 80, 1000, 450)
+        self.listWidget.show()
+        
+        delegate = CustomDelegate2(self.listWidget)
+        self.listWidget.setItemDelegate(delegate)
+
+        self.displaySessions(gameName)
+
+        self.listWidget.setStyleSheet("""
+            QListWidget {
+                padding: 0px;
+            }
+            QListWidget::item {
+                margin: 3px;
+                background-color: rgb(220,220,220);
+            }
+        """)
+
+        layout.addWidget(self.listWidget)
+
+    def displaySessions(self, gameName):
+        sessions = loadSessions(gameName)
+
+        self.listWidget.clear()
+        for i, session in enumerate(sessions):
+            i = str(i+1)
+            startDate = str(session["startDate"])
+            startTime = str(session["startTime"])
+            endDate = str(session["endDate"])
+            endTime = str(session["endTime"])
+            playtime = str(session["difference"])
+
+            self.item = QListWidgetItem()
+            self.itemWidget = StyledListItemWidget2(i, startDate, startTime, endDate, endTime, playtime)
+            self.listWidget.addItem(self.item)
+            self.listWidget.setItemWidget(self.item, self.itemWidget)
+
+
 
 
 app = QApplication(sys.argv)

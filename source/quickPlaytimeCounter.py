@@ -2,7 +2,6 @@ import os
 import json
 from datetime import timedelta
 
-
 def loadPlaytimes():
     playtimes = []
     for dir in os.listdir('Games'):
@@ -16,8 +15,9 @@ def loadPlaytimes():
             playtimes.append((dir, 0, False))
     return playtimes
 
-
 def reloadSessionPlaytimes():
+    if not os.path.isdir('Games'):
+        return 0
     for dir in os.listdir('Games'):
         localPath = os.path.join('Games', dir)
         totalPath = os.path.join(localPath, '0.txt')
@@ -51,7 +51,19 @@ def reloadSessionPlaytimes():
                 with open(totalPath, 'w') as f:
                     f.write(totalPlaytime)
                     f.write('\n' + completed)
+    return 1
+
+def loadSessions(game):
+    sessions = []
+    for sessionFile in os.listdir(os.path.join('Games', game)):
+        if sessionFile[-4:] == 'json':
+            path = os.path.join('Games', game, sessionFile)
+            with open(path) as f:
+                session = json.load(f)
+                sessions.append(session)
+    return sessions
 
 if __name__ == '__main__':
-    print(loadPlaytimes())
+    # print(loadPlaytimes())
     # reloadSessionPlaytimes()
+    print(loadSessions('Cuphead'))
