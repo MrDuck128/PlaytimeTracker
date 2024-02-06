@@ -164,19 +164,23 @@ class MainWindow(QMainWindow):
             itemWidget = StyledListItemWidget(game, playtime, completed)
             self.listWidget.addItem(item)
             self.listWidget.setItemWidget(item, itemWidget)
+    
 
+# Styled list item height for main window list display
 class CustomDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
         size.setHeight(128)  # Set the desired row height
         return size
-    
+
+# Styled list item height for session preview window list display
 class CustomDelegate2(QStyledItemDelegate):
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
         size.setHeight(64)  # Set the desired row height
         return size
     
+# StyledListItemWidget for main window list display
 class StyledListItemWidget(QWidget):
     def __init__(self, game, playtime, completed, parent=None):
         super().__init__(parent)
@@ -234,6 +238,7 @@ class StyledListItemWidget(QWidget):
                                     font-size: 14pt;
                                 """)
 
+# StyledListItemWidget for session preview window list display
 class StyledListItemWidget2(QWidget):
     def __init__(self, i, startDate, startTime, endDate, endTime, playtime, parent=None):
         super().__init__(parent)
@@ -373,7 +378,6 @@ class SessionPreview(QMainWindow):
             self.itemWidget = StyledListItemWidget2(i, startDate, startTime, endDate, endTime, playtime)
             self.listWidget.addItem(self.item)
             self.listWidget.setItemWidget(self.item, self.itemWidget)
-
 
 
 

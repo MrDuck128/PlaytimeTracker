@@ -1,7 +1,13 @@
 Playtime Tracker
+- add image when building
+- add sort + order
 
 
 Session Preview
+- reload sessions when "Reload Times" button is pressed?
 
 
 Session Tracker
+- force stop tracking
+- pause/continue tracking?
+

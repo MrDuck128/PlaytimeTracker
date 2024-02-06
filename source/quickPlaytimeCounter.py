@@ -1,6 +1,7 @@
 import os
 import json
 from datetime import timedelta
+from natsort import natsorted
 
 def loadPlaytimes():
     playtimes = []
@@ -25,10 +26,13 @@ def reloadSessionPlaytimes():
         start = 1 if os.path.isfile(totalPath) else 0
 
         for session in os.listdir(localPath)[start:]:
-            with open(os.path.join(localPath, session)) as sessionFile:
-                info = json.load(sessionFile)
-                (h, m, s) = (int(x) for x in info['difference'].split(':'))
-                totalPlaytime += timedelta(hours=h, minutes=m, seconds=s)
+            try:
+                with open(os.path.join(localPath, session)) as sessionFile:
+                    info = json.load(sessionFile)
+                    (h, m, s) = (int(x) for x in info['difference'].split(':'))
+                    totalPlaytime += timedelta(hours=h, minutes=m, seconds=s)
+            except:
+                raise ValueError(f'Something went wrong with processing "{dir}/{session}" data.')
 
         # FORMAT TOTAL PLAYTIME
         totalPlaytime = totalPlaytime.total_seconds()
@@ -55,7 +59,7 @@ def reloadSessionPlaytimes():
 
 def loadSessions(game):
     sessions = []
-    for sessionFile in os.listdir(os.path.join('Games', game)):
+    for sessionFile in natsorted(os.listdir(os.path.join('Games', game))):
         if sessionFile[-4:] == 'json':
             path = os.path.join('Games', game, sessionFile)
             with open(path) as f:
@@ -66,4 +70,4 @@ def loadSessions(game):
 if __name__ == '__main__':
     # print(loadPlaytimes())
     # reloadSessionPlaytimes()
-    print(loadSessions('Cuphead'))
+    print(loadSessions('Outer Wilds'))
