@@ -1,6 +1,4 @@
 Playtime Tracker
-- add image when building
-- add sort + order
 
 
 Session Preview

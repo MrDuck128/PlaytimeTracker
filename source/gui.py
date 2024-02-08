@@ -71,6 +71,30 @@ class MainWindow(QMainWindow):
         self.search.textChanged.connect(self.filterItems)
         searchLayout.addWidget(self.search)
 
+        searchLabel = QLabel('Sort:')
+        searchLabel.setStyleSheet("""
+                                margin-left: 10px;
+                                font-weight: bold;
+                                font-size: 15px;
+                             """)
+        searchLayout.addWidget(searchLabel, 0)
+
+        self.sortButton = QPushButton("Playtime", self)
+        self.sortButton.setFixedSize(130, 37)
+        self.sortButton.setCheckable(True)
+        self.sortButton.clicked.connect(self.changeSort)
+        searchLayout.addWidget(self.sortButton, 0)
+
+        buttonStyle = """
+            QPushButton {
+                height: 25px;
+                background-color: white;
+                font-weight: bold;
+                font-size: 15px;
+                border: 1px solid;
+            }"""
+        self.sortButton.setStyleSheet(buttonStyle)
+
         headerLayout.addLayout(searchLayout)
 
         layout.addWidget(header)
@@ -87,10 +111,48 @@ class MainWindow(QMainWindow):
             else:
                 listWidgetItem.setHidden(True)
 
+    def changeSort(self):
+
+        def iterAllItems():
+            for i in range(self.listWidget.count()):
+                yield self.listWidget.item(i)
+
+        tempItemList = []
+
+        for listWidgetItem in iterAllItems():
+            item = self.listWidget.itemWidget(listWidgetItem)
+            h, m, s = item.playtime.split(':')
+            playtimeSeconds = h*3600 + m*60 + s
+            tempItemList.append((item.gameName, item.playtime, playtimeSeconds, item.completed, item.isHidden()))
+
+
+        if self.sortButton.isChecked():
+            self.sortButton.setText('Name')
+
+            self.listWidget.clear()
+            for (game, playtime, _, completed, hidden) in sorted(tempItemList, key=lambda x: x[2], reverse=True):
+                item = QListWidgetItem()
+                itemWidget = StyledListItemWidget(game, playtime, completed)
+                self.listWidget.addItem(item)
+                self.listWidget.setItemWidget(item, itemWidget)
+                item.setHidden(hidden)
+
+        else:
+            self.sortButton.setText('Playtime')
+
+            self.listWidget.clear()
+            for (game, playtime, _, completed, hidden) in sorted(tempItemList, key=lambda x: x[0]):
+                item = QListWidgetItem()
+                itemWidget = StyledListItemWidget(game, playtime, completed)
+                self.listWidget.addItem(item)
+                self.listWidget.setItemWidget(item, itemWidget)
+                item.setHidden(hidden)
+
     def main(self, layout):
         self.listWidget = QListWidget()
         self.listWidget.setSpacing(0)
         # listWidget.setGeometry(0, 80, 1000, 450)
+        # self.listWidget.setSortingEnabled(True)
         self.listWidget.show()
         
         delegate = CustomDelegate(self.listWidget)
@@ -108,6 +170,8 @@ class MainWindow(QMainWindow):
                 background-color: rgb(220,220,220);
             }
         """)
+
+        self.listWidget.sortItems(QtCore.Qt.SortOrder.DescendingOrder)
 
         layout.addWidget(self.listWidget)
 
@@ -164,6 +228,9 @@ class MainWindow(QMainWindow):
             itemWidget = StyledListItemWidget(game, playtime, completed)
             self.listWidget.addItem(item)
             self.listWidget.setItemWidget(item, itemWidget)
+
+        self.sortButton.setText('Playtime')
+        self.sortButton.setChecked(False)
     
 
 # Styled list item height for main window list display
@@ -184,6 +251,10 @@ class CustomDelegate2(QStyledItemDelegate):
 class StyledListItemWidget(QWidget):
     def __init__(self, game, playtime, completed, parent=None):
         super().__init__(parent)
+
+        self.gameName = game
+        self.playtime = playtime
+        self.completed = completed
 
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
