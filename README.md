@@ -15,6 +15,10 @@
 
 - To add pictures to game listings, put a .png file with the game name (can be custom but must match the game name in *gamesExeNames.json*) in the folder named GameIcons (GameIcons must be in the same directory as the executable)
 
+- Double clicking a game opens *Session Preview* for that game
+
+- Clicking on *Sort* button toggles game sorting between *Name* and *Playtime*
+
 ![](source/showcase.png)
 
 
@@ -26,6 +30,8 @@
 
 - Run **gameNameOrder.py** to sort game names in *gamesExeNames.json* alphabetically
 
+- When the game is started, session playtime tracking will begin. Update interval is 10 min by default to reduce system load
+
 - You can edit the config for more options (check below). If there is no config file *Session Tracker.exe* will create one with default values on launch
 
 
@@ -36,6 +42,8 @@
 **OpeningScanInterval** - interval of seconds after which the check if a game is open will occur
 
 **ClosingScanInterval** - interval of seconds after which the check if tracked game is no longer open will occur
+
+**CurrentPlaytimeUpdateInterval** - interval of seconds afterr which the current session playtime updates
 
 **GameExeNames** - file with names of game .exe files and their full names
 

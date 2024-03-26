@@ -19,6 +19,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Playtime Tracker")
         self.setWindowIcon(QIcon('palm.ico'))
 
+        self.sessionPreviewLaunched = False
+
         mainWidget = QWidget(self)
         self.setCentralWidget(mainWidget)
 
@@ -141,7 +143,7 @@ class MainWindow(QMainWindow):
             self.sortButton.setText('Playtime')
 
             self.listWidget.clear()
-            for (game, playtime, _, completed, hidden) in sorted(tempItemList, key=lambda x: x[0]):
+            for (game, playtime, _, completed, hidden) in sorted(tempItemList, key=lambda x: x[0].lower()):
                 item = QListWidgetItem()
                 itemWidget = StyledListItemWidget(game, playtime, completed)
                 self.listWidget.addItem(item)
@@ -177,8 +179,10 @@ class MainWindow(QMainWindow):
 
     def launchSessionPreview(self, item):
         item = self.listWidget.itemWidget(item).findChildren(QLabel)[1].text()
-        sessionPreview = SessionPreview(item, self)
-        sessionPreview.show()
+        self.sessionPreview = SessionPreview(item, self)
+        self.sessionPreview.show()
+
+        self.sessionPreviewLaunched = True
 
     def footer(self, layout):
         footerLayout = QGridLayout()
@@ -231,6 +235,9 @@ class MainWindow(QMainWindow):
 
         self.sortButton.setText('Playtime')
         self.sortButton.setChecked(False)
+
+        if self.sessionPreviewLaunched:
+            self.sessionPreview.displaySessions(0)
     
 
 # Styled list item height for main window list display
@@ -292,6 +299,16 @@ class StyledListItemWidget(QWidget):
             f.write(playtime)
             f.write('\n' + str(int(completed)))
         self.changeLabelColor(completed)
+
+        # window.reloadData()
+        
+        for i in range(window.listWidget.count()):
+            listWidgetItem = window.listWidget.item(i)
+            item = window.listWidget.itemWidget(listWidgetItem)
+            # each item has 3 labels, (pic, game, playtime)
+            gameName = item.findChildren(QLabel)[1].text()
+            if game in gameName:
+                item.completed = completed
         
     def changeLabelColor(self, completed):
         if completed:
@@ -376,6 +393,8 @@ class SessionPreview(QMainWindow):
         self.setWindowTitle(f"Session Preview - {gameName}")
         self.setWindowIcon(QIcon('palm.ico'))
 
+        self.gameName = gameName
+
         mainWidget = QWidget(self)
         self.setCentralWidget(mainWidget)
 
@@ -434,7 +453,8 @@ class SessionPreview(QMainWindow):
         layout.addWidget(self.listWidget)
 
     def displaySessions(self, gameName):
-        sessions = loadSessions(gameName)
+        if gameName: sessions = loadSessions(gameName)
+        else: sessions = loadSessions(self.gameName)
 
         self.listWidget.clear()
         for i, session in enumerate(sessions):
@@ -450,7 +470,8 @@ class SessionPreview(QMainWindow):
             self.listWidget.addItem(self.item)
             self.listWidget.setItemWidget(self.item, self.itemWidget)
 
-
+    def closeEvent(self, event):
+        window.sessionPreviewLaunched = False
 
 app = QApplication(sys.argv)
 

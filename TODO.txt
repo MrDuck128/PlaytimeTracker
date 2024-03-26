@@ -1,11 +1,11 @@
 Playtime Tracker
 
 
+
 Session Preview
-- reload sessions when "Reload Times" button is pressed?
+
 
 
 Session Tracker
 - force stop tracking
 - pause/continue tracking?
-
