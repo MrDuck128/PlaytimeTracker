@@ -244,7 +244,7 @@ class MainWindow(QMainWindow):
 class CustomDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
-        size.setHeight(128)  # Set the desired row height
+        size.setHeight(142)  # Set the desired row height
         return size
 
 # Styled list item height for session preview window list display
