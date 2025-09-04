@@ -1,73 +1,71 @@
 import os
 import json
-from datetime import timedelta
+from datetime import timedelta, datetime
 from natsort import natsorted
+import glob
 
-def loadPlaytimes():
-    playtimes = []
-    for dir in os.listdir('Games'):
-        path = os.path.join('Games', dir, '0.txt')
+GAME_DATA_FILE = 'gameData.json'
 
-        if os.path.isfile(path):
-            with open(path, 'r') as f:
-                playtime, completed = f.read().splitlines()
-            playtimes.append((dir, playtime, int(completed)))
-        else:
-            playtimes.append((dir, 0, False))
-    return playtimes
+def loadGameData() -> dict:
+    '''
+    Loads all game data from the game data file and returns it. 
+    Structure:
+    {
+        Game name:
+            playtime,
+            completed,
+            lastPlayed,
+            sessions
+    }
+    '''
 
-def reloadSessionPlaytimes():
-    if not os.path.isdir('Games'):
+    # no data file
+    if not os.path.isfile(GAME_DATA_FILE):
         return 0
-    for dir in os.listdir('Games'):
-        localPath = os.path.join('Games', dir)
-        totalPath = os.path.join(localPath, '0.txt')
-        totalPlaytime = timedelta()
-        start = 1 if os.path.isfile(totalPath) else 0
+    
+    try:
+        with open(GAME_DATA_FILE) as f:
+            gameData = json.load(f)
+        return gameData
+    except Exception as e:
+        print(e)
 
-        for session in os.listdir(localPath)[start:]:
-            try:
-                with open(os.path.join(localPath, session)) as sessionFile:
-                    info = json.load(sessionFile)
-                    (h, m, s) = (int(x) for x in info['difference'].split(':'))
-                    totalPlaytime += timedelta(hours=h, minutes=m, seconds=s)
-            except:
-                raise ValueError(f'Something went wrong with processing "{dir}/{session}" data.')
+def reloadSessionPlaytimes(gameData=0):
+    newGameData = loadGameData()
 
-        # FORMAT TOTAL PLAYTIME
-        totalPlaytime = totalPlaytime.total_seconds()
-        hours = int(totalPlaytime / 3600)
-        minutes = int(totalPlaytime % 3600 / 60)
-        seconds = int((totalPlaytime % 3600) % 60)
-        totalPlaytime = f'{hours:02d}:{minutes:02d}:{seconds:02d}'
+    for game, data in newGameData.items():
+        # if 'completed' in data:
+        #     del newGameData[game]['completed']
 
-        # IF "0.txt" FILE DOENS'T EXIST
-        if not start:
-            with open(totalPath, 'w') as file:
-                file.write(totalPlaytime)
-                file.write("\n0")
-            return
+        playtime = timedelta()
+        for session in data['sessions']:
+            t = datetime.strptime(session['difference'], '%H:%M:%S')
+            playtime += timedelta(hours=t.hour, minutes=t.minute, seconds=t.second)
+        
+        lastPlayed = data['sessions'][-1]['end']
 
-        with open(totalPath, 'r') as f:
-            oldPlaytime, completed = f.read().splitlines()
-        if oldPlaytime != totalPlaytime:
-            # if input('Outputs not the same, do you want to override old time? (y/n)') == 'y':
-                with open(totalPath, 'w') as f:
-                    f.write(totalPlaytime)
-                    f.write('\n' + completed)
-    return 1
+        playtime = playtime.total_seconds()
+        newGameData[game]['playtime'] = f'{int(playtime//3600):02d}:{int(playtime%3600//60)}:{int(playtime%60)}'
+        newGameData[game]['lastPlayed'] = lastPlayed
 
-def loadSessions(game):
-    sessions = []
-    for sessionFile in natsorted(os.listdir(os.path.join('Games', game))):
-        if sessionFile[-4:] == 'json':
-            path = os.path.join('Games', game, sessionFile)
-            with open(path) as f:
-                session = json.load(f)
-                sessions.append(session)
-    return sessions
+    # return newGameData if no current data is loaded/available
+    if not gameData:
+        return newGameData
+    
+    # update all except "completed" status from app
+    for game, changes in gameData.items():
+        if game in newGameData:
+            newGameData[game]['completed'] = changes['completed']
+    return newGameData
 
+def saveData(gameData):
+    try:
+        with open(GAME_DATA_FILE, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(gameData, indent=4))
+    except Exception as e:
+        print(e)
+    
 if __name__ == '__main__':
     # print(loadPlaytimes())
     # reloadSessionPlaytimes()
-    print(loadSessions('Outer Wilds'))
+    print(loadGameData())

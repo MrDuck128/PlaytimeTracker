@@ -4,8 +4,9 @@ from PyQt6.QtGui import QIcon, QFont, QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QListWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QListWidgetItem, QPushButton, QStyledItemDelegate, QCheckBox
 from PyQt6.QtCore import Qt, QCoreApplication
 import sys, os
-from quickPlaytimeCounter import loadPlaytimes, reloadSessionPlaytimes, loadSessions
+from quickPlaytimeCounter import loadGameData, reloadSessionPlaytimes, saveData
 import ctypes
+from datetime import datetime
 
 myappid = 'playtimeTracker'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
@@ -81,11 +82,13 @@ class MainWindow(QMainWindow):
                              """)
         searchLayout.addWidget(searchLabel, 0)
 
-        self.sortButton = QPushButton("Playtime", self)
-        self.sortButton.setFixedSize(130, 37)
-        self.sortButton.setCheckable(True)
-        self.sortButton.clicked.connect(self.changeSort)
-        searchLayout.addWidget(self.sortButton, 0)
+        self.sortButton1 = QPushButton('Name', self)
+        self.sortButton1.setFixedSize(130, 37)
+        searchLayout.addWidget(self.sortButton1, 0)
+
+        self.sortButton2 = QPushButton('Playtime', self)
+        self.sortButton2.setFixedSize(130, 37)
+        searchLayout.addWidget(self.sortButton2, 0)
 
         buttonStyle = """
             QPushButton {
@@ -95,7 +98,11 @@ class MainWindow(QMainWindow):
                 font-size: 15px;
                 border: 1px solid;
             }"""
-        self.sortButton.setStyleSheet(buttonStyle)
+        self.sortButton1.setStyleSheet(buttonStyle)
+        self.sortButton2.setStyleSheet(buttonStyle)
+
+        self.sortButton1.clicked.connect(self.handleSortButton)
+        self.sortButton2.clicked.connect(self.handleSortButton)
 
         headerLayout.addLayout(searchLayout)
 
@@ -113,7 +120,12 @@ class MainWindow(QMainWindow):
             else:
                 listWidgetItem.setHidden(True)
 
-    def changeSort(self):
+    def handleSortButton(self):
+        sender = self.sender()
+        sortKey = sender.text()
+        self.changeSort(sortKey)
+
+    def changeSort(self, newSort):
 
         def iterAllItems():
             for i in range(self.listWidget.count()):
@@ -123,32 +135,39 @@ class MainWindow(QMainWindow):
 
         for listWidgetItem in iterAllItems():
             item = self.listWidget.itemWidget(listWidgetItem)
-            h, m, s = item.playtime.split(':')
+            h, m, s = map(int, item.playtime.split(':'))
             playtimeSeconds = h*3600 + m*60 + s
-            tempItemList.append((item.gameName, item.playtime, playtimeSeconds, item.completed, item.isHidden()))
+            tempItemList.append((item.gameName, item.playtime, playtimeSeconds, item.completed, item.lastPlayed, item.isHidden()))
 
+        match newSort:
+            case 'Last played':
+                self.sortButton1.setText('Name')
+                self.sortButton2.setText('Playtime')
 
-        if self.sortButton.isChecked():
-            self.sortButton.setText('Name')
+                funcKey = lambda x: x[4]
+                reverse = True
 
-            self.listWidget.clear()
-            for (game, playtime, _, completed, hidden) in sorted(tempItemList, key=lambda x: x[2], reverse=True):
-                item = QListWidgetItem()
-                itemWidget = StyledListItemWidget(game, playtime, completed)
-                self.listWidget.addItem(item)
-                self.listWidget.setItemWidget(item, itemWidget)
-                item.setHidden(hidden)
+            case 'Playtime':
+                self.sortButton1.setText('Name')
+                self.sortButton2.setText('Last played')
 
-        else:
-            self.sortButton.setText('Playtime')
+                funcKey = lambda x: x[2]
+                reverse = True
 
-            self.listWidget.clear()
-            for (game, playtime, _, completed, hidden) in sorted(tempItemList, key=lambda x: x[0].lower()):
-                item = QListWidgetItem()
-                itemWidget = StyledListItemWidget(game, playtime, completed)
-                self.listWidget.addItem(item)
-                self.listWidget.setItemWidget(item, itemWidget)
-                item.setHidden(hidden)
+            case 'Name':
+                self.sortButton1.setText('Last played')
+                self.sortButton2.setText('Playtime')
+
+                funcKey = lambda x: x[0].lower()
+                reverse = False
+
+        self.listWidget.clear()
+        for (game, playtime, _, completed, lastPlayed, hidden) in sorted(tempItemList, key=funcKey, reverse=reverse):
+            item = QListWidgetItem()
+            itemWidget = StyledListItemWidget(game, playtime, completed, lastPlayed)
+            self.listWidget.addItem(item)
+            self.listWidget.setItemWidget(item, itemWidget)
+            item.setHidden(hidden)
 
     def main(self, layout):
         self.listWidget = QListWidget()
@@ -160,8 +179,6 @@ class MainWindow(QMainWindow):
         delegate = CustomDelegate(self.listWidget)
         self.listWidget.setItemDelegate(delegate)
         self.listWidget.itemDoubleClicked.connect(self.launchSessionPreview)
-
-        self.reloadData()
 
         self.listWidget.setStyleSheet("""
             QListWidget {
@@ -177,6 +194,9 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.listWidget)
 
+        self.reloadWidget()
+        self.changeSort('Last played')
+
     def launchSessionPreview(self, item):
         item = self.listWidget.itemWidget(item).findChildren(QLabel)[1].text()
         self.sessionPreview = SessionPreview(item, self)
@@ -188,7 +208,7 @@ class MainWindow(QMainWindow):
         footerLayout = QGridLayout()
         footerLayout.setRowMinimumHeight(0, 50)
 
-        quitButton = QPushButton("Quit", self)
+        quitButton = QPushButton("Save and Quit", self)
         quitButton.setFixedSize(130, 40)
         quitButton.clicked.connect(self.closeApp)
         footerLayout.addWidget(quitButton, 0, 0)
@@ -196,7 +216,7 @@ class MainWindow(QMainWindow):
         # spacer = QSpacerItem(1, 1)
         # footerLayout.addItem(spacer, 0, 1, 1, 2)
 
-        reloadButton = QPushButton("Reload times", self)
+        reloadButton = QPushButton("Reload data", self)
         reloadButton.setFixedSize(130, 40)
         reloadButton.clicked.connect(self.reloadData)
         footerLayout.addWidget(reloadButton, 0, 2)
@@ -213,28 +233,32 @@ class MainWindow(QMainWindow):
         layout.addLayout(footerLayout)
 
     def closeApp(self):
+
+        saveData(gameData)
         QCoreApplication.instance().quit()
 
-    # depricated
-    # def restart(self):
-    #     QCoreApplication.quit()
-    #     status = QProcess.startDetached(sys.executable, sys.argv)
-
-    def reloadData(self):
-        # reload and check if no games
-        if not reloadSessionPlaytimes():
-            return
-
+    def reloadWidget(self):
         self.listWidget.clear()
         self.search.clear()
-        for (game, playtime, completed) in loadPlaytimes():
+        for game, data in gameData.items():
             item = QListWidgetItem()
-            itemWidget = StyledListItemWidget(game, playtime, completed)
+            itemWidget = StyledListItemWidget(game, data['playtime'], data['completed'], datetime.strptime(data['lastPlayed'], '%d-%m-%Y %H:%M:%S'))
+            # datetime.strftime(data['lastPlayed'], '%H:%M:%S')
             self.listWidget.addItem(item)
             self.listWidget.setItemWidget(item, itemWidget)
 
-        self.sortButton.setText('Playtime')
-        self.sortButton.setChecked(False)
+
+    def reloadData(self):
+        global gameData
+
+        gameData = reloadSessionPlaytimes(gameData)
+
+        self.reloadWidget()
+
+        self.sortButton1.setText('Last played')
+        self.sortButton2.setText('Playtime')
+
+        self.changeSort('Last played')
 
         if self.sessionPreviewLaunched:
             self.sessionPreview.displaySessions(0)
@@ -256,12 +280,13 @@ class CustomDelegate2(QStyledItemDelegate):
     
 # StyledListItemWidget for main window list display
 class StyledListItemWidget(QWidget):
-    def __init__(self, game, playtime, completed, parent=None):
+    def __init__(self, game, playtime, completed, lastPlayed, parent=None):
         super().__init__(parent)
 
         self.gameName = game
         self.playtime = playtime
         self.completed = completed
+        self.lastPlayed = lastPlayed
 
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
@@ -291,24 +316,26 @@ class StyledListItemWidget(QWidget):
 
         checkbox = QCheckBox(self)
         checkbox.setChecked(completed)
-        checkbox.stateChanged.connect(lambda completed: self.changeCompleted(game, playtime, checkbox.isChecked())) # TODO lambda?
+        checkbox.stateChanged.connect(lambda _: self.changeCompleted(game, playtime, checkbox.isChecked())) # TODO lambda?
         row.addWidget(checkbox, 1)
 
     def changeCompleted(self, game, playtime, completed):
-        with open(os.path.join('Games', game, '0.txt'), 'w') as f:
-            f.write(playtime)
-            f.write('\n' + str(int(completed)))
+        # with open(os.path.join('Games', game, '0.txt'), 'w') as f:
+        #     f.write(playtime)
+        #     f.write('\n' + str(int(completed)))
         self.changeLabelColor(completed)
+
+        gameData[game]['completed'] = bool(1 - gameData[game]['completed'])
 
         # window.reloadData()
         
-        for i in range(window.listWidget.count()):
-            listWidgetItem = window.listWidget.item(i)
-            item = window.listWidget.itemWidget(listWidgetItem)
-            # each item has 3 labels, (pic, game, playtime)
-            gameName = item.findChildren(QLabel)[1].text()
-            if game in gameName:
-                item.completed = completed
+        # for i in range(window.listWidget.count()):
+        #     listWidgetItem = window.listWidget.item(i)
+        #     item = window.listWidget.itemWidget(listWidgetItem)
+        #     # each item has 3 labels, (pic, game, playtime)
+        #     gameName = item.findChildren(QLabel)[1].text()
+        #     if game in gameName:
+        #         item.completed = completed
         
     def changeLabelColor(self, completed):
         if completed:
@@ -328,11 +355,14 @@ class StyledListItemWidget(QWidget):
 
 # StyledListItemWidget for session preview window list display
 class StyledListItemWidget2(QWidget):
-    def __init__(self, i, startDate, startTime, endDate, endTime, playtime, parent=None):
+    def __init__(self, i, start, end, playtime, parent=None):
         super().__init__(parent)
 
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
+
+        startDate, startTime = start.split(' ')
+        endDate, endTime = end.split(' ')
 
         self.label1 = QLabel(i)
         self.label1.setStyleSheet("""
@@ -453,25 +483,27 @@ class SessionPreview(QMainWindow):
         layout.addWidget(self.listWidget)
 
     def displaySessions(self, gameName):
-        if gameName: sessions = loadSessions(gameName)
-        else: sessions = loadSessions(self.gameName)
+        if gameName: sessions = gameData[gameName]['sessions']
+        else: sessions = gameData[gameName]['sessions']
 
         self.listWidget.clear()
-        for i, session in enumerate(sessions):
-            i = str(i+1)
-            startDate = str(session["startDate"])
-            startTime = str(session["startTime"])
-            endDate = str(session["endDate"])
-            endTime = str(session["endTime"])
-            playtime = str(session["difference"])
+        for i, session in enumerate(sessions, start=1):
+            start = session['start']
+            end = session['end']
+            playtime = session['difference']
 
-            self.item = QListWidgetItem()
-            self.itemWidget = StyledListItemWidget2(i, startDate, startTime, endDate, endTime, playtime)
-            self.listWidget.addItem(self.item)
-            self.listWidget.setItemWidget(self.item, self.itemWidget)
+            item = QListWidgetItem()
+            itemWidget = StyledListItemWidget2(str(i), start, end, playtime)
+            self.listWidget.addItem(item)
+            self.listWidget.setItemWidget(item, itemWidget)
 
     def closeEvent(self, event):
         window.sessionPreviewLaunched = False
+        
+        saveData(gameData)
+        event.accept()
+
+gameData = loadGameData()
 
 app = QApplication(sys.argv)
 
