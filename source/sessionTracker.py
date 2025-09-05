@@ -1,11 +1,14 @@
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep
 import json
 import psutil
 import configparser
 from natsort import natsorted
+from quickPlaytimeCounter import loadGameData, reloadSessionPlaytimes, formatSeconds, formatTime
+
+GAME_DATA_FILE = 'gameData.json'
 
 def scanForGame(gamesList):
     for proc in psutil.process_iter():
@@ -19,41 +22,42 @@ def isGameStillOpen(gameProcessName):
             return True
     return False
 
-def formatSeconds(seconds):
-    hours = int(seconds / 3600)
-    minutes = int(seconds % 3600 / 60)
-    seconds = int((seconds % 3600) % 60)
-    
-    return hours, minutes, seconds
 
-
-def saveSession():
-    # ADD NEW FILE AFTER LAST INDEX OR START AT 1 IF NONE EXIST
-    if not os.listdir(path) or len(os.listdir(path)) == 1 and os.path.isfile(os.path.join(path, '0.txt')):
-        newSessionIndex = str(1)
-    else:
-        lastSessionIndex = int(natsorted(os.listdir(path))[-1].replace('.json', ''))
-        newSessionIndex = str(lastSessionIndex + 1)
-
+def saveSession(gameName, sT, start):
     eT = datetime.now().replace(microsecond=0)
-    endDate = eT.strftime("%d-%m-%Y")
-    endTime = eT.strftime("%H:%M:%S")
+    end = eT.strftime("%d-%m-%Y %H:%M:%S")
     differenceSeconds = (eT - sT).total_seconds()
 
-    # FORMAT DIFFERENCE
-    hours, minutes, seconds = formatSeconds(differenceSeconds)
-    difference = f'{hours:02d}:{minutes:02d}:{seconds:02d}'
+    gameData = loadGameData()
 
-    data = {
-        "startDate": startDate,
-        "startTime": startTime,
-        "endDate": endDate,
-        "endTime": endTime,
-        "difference": str(difference)
-    }
-    print(f'Saving to: "{path}" as "{newSessionIndex+".json"}"')
-    with open(os.path.join(path, newSessionIndex+".json"), 'w') as file:
-        file.write(json.dumps(data, indent=4))
+    if not gameData:
+        gameData = {}
+
+    if gameName not in gameData:
+        gameData[gameName] = {
+            'playtime': "00:00:00",
+            'completed': False,
+            'lastPlayed': '01-01-2001 01:01:01',
+            'sessions': []
+        }
+
+    # FORMAT DIFFERENCE
+    difference = formatSeconds(differenceSeconds)
+    
+    # TOTAL PLAYTIME + CURRENT SESSION PLAYTIME
+    playtimeSeconds = formatTime(gameData[gameName]['playtime'])
+    gameData[gameName]['playtime'] = formatSeconds(playtimeSeconds + differenceSeconds)
+    gameData[gameName]['lastPlayed'] = end
+    gameData[gameName]['sessions'].append({
+        'start': start,
+        'end': end,
+        'difference': difference
+    })
+
+
+
+    with open(GAME_DATA_FILE, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(gameData, indent=4))
 
     return difference
 
@@ -94,22 +98,21 @@ while True:
     gameProcessName = scanForGame(gamesProcessList)
 
     if gameProcessName:
-        gameFullName = gamesDict[gameProcessName]
-        print(f'GAME FOUND! -> {gameFullName} ({gameProcessName})')
+        gameName = gamesDict[gameProcessName]
+        print(f'GAME FOUND! -> {gameName} ({gameProcessName})')
         break
 
     sleep(openingScanInterval)
 
 sT = datetime.now().replace(microsecond=0)
-startDate = sT.strftime("%d-%m-%Y")
-startTime = sT.strftime("%H:%M:%S")
+start = sT.strftime("%d-%m-%Y %H:%M:%S")
 
 
-# CREATE FOLEDR IF NOT EXISTS
-path = os.path.join(gamesPath, gameFullName)
-
-if not os.path.isdir(path):
-    os.makedirs(path)
+# # CREATE DATA FILE IF IT DOESN'T EXIST
+# if not os.path.isfile('gameData.json'):
+#     with open(GAME_DATA_FILE, 'w', encoding='utf-8') as f:
+#         f.write({})
+#     print('Created game data file.')
 
 # CHECK IF GAME IS OPEN, IF NOT SAVE SESSION
 currentPlaytime = 0
@@ -118,12 +121,12 @@ while True:
 
     if not gameStillOpen:
         print('Game closed, logging session.')
-        playtime = saveSession()
+        playtime = saveSession(gameName, sT, start)
         break
 
     if currentPlaytime % currentPlaytimeUpdateInterval == 0:
-        hours, minutes, seconds = formatSeconds(currentPlaytime)
-        print(f'Tracking...       {hours:02d}:{minutes:02d}:{seconds:02d}', end='\r', flush=True)
+        playtime = formatSeconds(currentPlaytime)
+        print(f'Tracking...       {playtime}', end='\r', flush=True)
 
     currentPlaytime += closingScanInterval
     sleep(closingScanInterval)

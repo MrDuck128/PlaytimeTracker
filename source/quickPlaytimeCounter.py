@@ -6,6 +6,18 @@ import glob
 
 GAME_DATA_FILE = 'gameData.json'
 
+def formatSeconds(seconds: int) -> str:
+    hours = int(seconds // 3600)
+    minutes = int(seconds % 3600 // 60)
+    seconds = int(seconds % 60)
+    
+    return f'{hours:02d}:{minutes:02d}:{seconds:02d}'
+
+def formatTime(playtime: str) -> int:
+    hours, minutes, seconds = map(int, playtime.split(':'))
+
+    return hours*3600 + minutes*60 + seconds
+
 def loadGameData() -> dict:
     '''
     Loads all game data from the game data file and returns it. 
@@ -44,8 +56,7 @@ def reloadSessionPlaytimes(gameData=0):
         
         lastPlayed = data['sessions'][-1]['end']
 
-        playtime = playtime.total_seconds()
-        newGameData[game]['playtime'] = f'{int(playtime//3600):02d}:{int(playtime%3600//60)}:{int(playtime%60)}'
+        newGameData[game]['playtime'] = formatSeconds(playtime.total_seconds())
         newGameData[game]['lastPlayed'] = lastPlayed
 
     # return newGameData if no current data is loaded/available
